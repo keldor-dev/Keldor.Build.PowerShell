@@ -1,0 +1,9 @@
+node_modules/
+vendor/
+dist/
+build/
+out/
+coverage/
+
+CHANGELOG.md
+LICENSE*
