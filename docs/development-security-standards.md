@@ -2,9 +2,14 @@
 
 ## Purpose
 
-This document defines the development, compatibility, and security standards for `Keldor.Build.PowerShell`.
+This document captures local development and security expectations for `Keldor.Build.PowerShell`.
 
-The goal is to produce PowerShell build tooling that is secure, maintainable, cross-platform where practical, and suitable for enterprise or government-adjacent environments.
+The canonical Keldor standards live in the `keldor-dev/Keldor` repository:
+
+- Keldor General Engineering Standard v1.0
+- Keldor PowerShell Engineering Standard v1.0
+
+This repository should follow those standards and eventually provide tooling to validate them.
 
 ## Engineering Principles
 
@@ -65,7 +70,7 @@ Preferred runtime:
 Supported where practical:
 
 - Windows PowerShell 5.1
-- Windows PowerShell 2.0
+- PowerShell 2.0 where safe and maintainable
 
 PowerShell 2.0 compatibility should be preserved only when it does not weaken security, correctness, readability, or maintainability.
 
@@ -83,68 +88,14 @@ Avoid assuming availability of:
 
 Use platform checks when platform-specific behavior is required.
 
-## PowerShell Style
+## Local Validation
 
-PowerShell code should:
-
-- Use approved verbs.
-- Use clear function and parameter names.
-- Prefer full cmdlet names over aliases.
-- Prefer named parameters over positional parameters.
-- Use four-space indentation.
-- Use LF line endings.
-- Include a final newline.
-- Avoid unnecessary `Write-Host` usage.
-- Use `Write-Verbose` and `Write-Debug` for diagnostic output.
-
-## Testing
-
-Public behavior should be covered by Pester tests where practical.
-
-Tests should include:
-
-- Successful operation
-- Invalid input
-- Missing dependencies
-- Cross-platform assumptions
-
-## Static Analysis
-
-PSScriptAnalyzer should be run before merging changes.
-
-```powershell
-./build/build.ps1 -Analyze
-```
-
-## Build Validation
-
-Before release, run:
+Run the local build script before committing changes:
 
 ```powershell
 ./build/build.ps1 -Clean -Analyze -Test
 ```
 
-## Documentation
+## Future Standard Enforcement
 
-Public commands should have documentation that explains:
-
-- Purpose
-- Parameters
-- Examples
-- Compatibility considerations
-- Security considerations when relevant
-
-## Repository Hygiene
-
-Keldor repositories should include:
-
-- `.editorconfig`
-- `.gitattributes`
-- `.gitignore`
-- `.markdownlint.json`
-- `.markdownlintignore`
-- `README.md`
-- `CHANGELOG.md`
-- `CONTRIBUTING.md`
-- `SECURITY.md`
-- `LICENSE`
+Future versions of this module should validate Keldor standards through commands documented in [Standards Alignment](standards/Keldor_Build_PowerShell_Standard_Alignment.md).
