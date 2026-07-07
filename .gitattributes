@@ -86,15 +86,16 @@ requirements*.txt text eol=lf
 *.jpg     binary
 *.jpeg    binary
 *.gif     binary
+*.svg     text
 *.ico     binary
+
 *.pdf     binary
 *.zip     binary
 *.7z      binary
 *.gz      binary
 *.tar     binary
+
 *.dll     binary
 *.exe     binary
 *.so      binary
 *.dylib   binary
-
-*.svg     text eol=lf
