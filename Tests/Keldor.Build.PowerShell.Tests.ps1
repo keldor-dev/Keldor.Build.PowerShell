@@ -1,5 +1,8 @@
 BeforeAll {
-    Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '..' | Join-Path -ChildPath 'Keldor.Build.PowerShell.psd1') -Force
+    $RepoRoot = Join-Path -Path $PSScriptRoot -ChildPath '..'
+    $ManifestPath = Join-Path -Path $RepoRoot -ChildPath 'Keldor.Build.PowerShell.psd1'
+
+    Import-Module $ManifestPath -Force
 }
 
 Describe 'Keldor.Build.PowerShell' {
