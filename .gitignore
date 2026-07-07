@@ -1,0 +1,32 @@
+# PowerShell
+*.ps1xml
+*.clixml
+*.format.ps1xml
+
+# Build outputs
+artifacts/
+out/
+build/output/
+bin/
+obj/
+
+# Test / coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+*.local.*
+.env
+.env.*
+!.env.example
+
+# Packages
+*.nupkg
