@@ -20,6 +20,7 @@ It focuses on:
 - Optional publishing workflows
 - Cross-platform PowerShell development
 - Backwards-compatible PowerShell where practical
+- Future enforcement of Keldor PowerShell engineering standards
 
 ## Relationship to Keldor.Build
 
@@ -67,12 +68,22 @@ Invoke-KeldorPowerShellBuild -Path . -Clean -Test
 ./build/build.ps1 -Clean -Analyze -Test
 ```
 
+## Keldor Standards
+
+This repository targets the Keldor engineering standards:
+
+- [Keldor General Engineering Standard](https://github.com/keldor-dev/Keldor/blob/main/docs/standards/Keldor_General_Engineering_Standard.md)
+- [Keldor PowerShell Engineering Standard](https://github.com/keldor-dev/Keldor/blob/main/docs/standards/Keldor_PowerShell_Engineering_Standard.md)
+
+`Keldor.Build.PowerShell` should eventually provide the validation commands that enforce those standards in CI and local builds.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Commands](docs/commands.md)
 - [Development and Security Standards](docs/development-security-standards.md)
 - [PowerShell Provider](docs/powershell-provider.md)
+- [Standards Alignment](docs/standards/Keldor_Build_PowerShell_Standard_Alignment.md)
 
 ## Compatibility Goals
 
