@@ -1,12 +1,18 @@
 [CmdletBinding()]
 param(
+    [Parameter()]
+    [switch]$Clean,
+
+    [Parameter()]
     [switch]$Test,
-    [switch]$Analyze,
-    [switch]$Clean
+
+    [Parameter()]
+    [switch]$Analyze
 )
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$ModuleManifest = Join-Path $RepoRoot 'Keldor.Build.PowerShell.psd1'
+$ModuleManifest = Join-Path -Path $RepoRoot -ChildPath 'Keldor.Build.PowerShell.psd1'
+$AnalyzerSettings = Join-Path -Path $RepoRoot -ChildPath 'PSScriptAnalyzerSettings.psd1'
 
 Import-Module $ModuleManifest -Force
 
@@ -17,7 +23,7 @@ if ($Analyze) {
         throw 'PSScriptAnalyzer is not available. Install the PSScriptAnalyzer module before running analysis.'
     }
 
-    Invoke-ScriptAnalyzer -Path $RepoRoot -Recurse -Severity Warning,Error
+    Invoke-ScriptAnalyzer -Path $RepoRoot -Recurse -Settings $AnalyzerSettings
 }
 
 Invoke-KeldorPowerShellBuild -Path $RepoRoot -Clean:$Clean -Test:$Test
