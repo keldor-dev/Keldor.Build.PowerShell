@@ -1,8 +1,10 @@
 # Keldor.Build.PowerShell
 
-PowerShell build provider for the Keldor ecosystem.
+PowerShell build toolkit for the Keldor ecosystem.
 
-`Keldor.Build.PowerShell` contains PowerShell-specific project detection, validation, build, test, clean, and publish behavior. It is intended to work with the generic `Keldor.Build` orchestration layer while still exposing direct commands for PowerShell module workflows.
+`Keldor.Build.PowerShell` is the authoritative place for PowerShell-specific project detection, validation, build, test, clean, packaging, and publishing behavior.
+
+It can integrate with the generic `Keldor.Build` orchestration layer, but it does not depend on it for normal PowerShell module workflows.
 
 ## Purpose
 
@@ -30,7 +32,7 @@ Keldor.Build
 └── Keldor.Build.PowerShell
 ```
 
-Future language-specific providers should follow the same pattern:
+Future language-specific build toolkits should follow the same pattern:
 
 - `Keldor.Build.Python`
 - `Keldor.Build.DotNet`
@@ -55,9 +57,20 @@ Publish-KeldorPowerShellProject
 Import-Module ./Keldor.Build.PowerShell.psd1 -Force
 
 Resolve-KeldorPowerShellProject -Path .
-Test-KeldorPowerShellProject -Path .
-Invoke-KeldorPowerShellBuild -Path . -Test
+Test-KeldorPowerShellProject -Path . -Analyze
+Invoke-KeldorPowerShellBuild -Path . -Clean -Test
 ```
+
+## Local Development
+
+```powershell
+./build/build.ps1 -Clean -Analyze -Test
+```
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Commands](docs/commands.md)
 
 ## Compatibility Goals
 
