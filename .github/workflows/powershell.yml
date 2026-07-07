@@ -1,0 +1,29 @@
+name: PowerShell
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Analyze
+        shell: pwsh
+        run: Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error
+
+      - name: Test
+        shell: pwsh
+        run: Invoke-Pester ./Tests -CI
