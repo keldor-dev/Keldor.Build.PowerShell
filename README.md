@@ -71,6 +71,8 @@ Invoke-KeldorPowerShellBuild -Path . -Clean -Test
 
 - [Architecture](docs/architecture.md)
 - [Commands](docs/commands.md)
+- [Development and Security Standards](docs/development-security-standards.md)
+- [PowerShell Provider](docs/powershell-provider.md)
 
 ## Compatibility Goals
 
