@@ -20,7 +20,7 @@ function Test-KeldorPowerShellProject {
             throw 'PSScriptAnalyzer is not available. Install the PSScriptAnalyzer module or run without -Analyze.'
         }
 
-        Invoke-ScriptAnalyzer -Path $Project.Path -Recurse -Severity Warning,Error
+        Invoke-ScriptAnalyzer -Path $Project.Path -Recurse -Severity Warning, Error
     }
 
     $true

@@ -26,6 +26,19 @@ Builds a PowerShell module project into an artifact directory.
 ```powershell
 Invoke-KeldorPowerShellBuild -Path .
 Invoke-KeldorPowerShellBuild -Path . -Clean -Test
+Invoke-KeldorPowerShellBuild -ConfigurationPath ./build.config.psd1 -Task Build
+Invoke-KeldorPowerShellBuild -ConfigurationPath ./build.config.psd1 -Task Release -Version '1.2.3'
+```
+
+The original flat-project parameter set remains supported. The configuration parameter set supports `Validate`,
+`Build`, `Release`, and `Publish`, returns structured results, and honors `-WhatIf` for artifact and publishing changes.
+
+## `Test-KeldorPowerShellBuildConfiguration`
+
+Validates a repository build data file and returns normalized absolute paths without creating build output.
+
+```powershell
+Test-KeldorPowerShellBuildConfiguration -ConfigurationPath ./build.config.psd1
 ```
 
 ## `Invoke-KeldorPowerShellProjectTests`

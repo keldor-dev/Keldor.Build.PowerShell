@@ -6,7 +6,37 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
+  windows-powershell-51:
+    name: Windows PowerShell 5.1
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse, validate, and import
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSEdition -ne 'Desktop' -or $PSVersionTable.PSVersion.Major -ne 5) {
+              throw "Expected Windows PowerShell 5.1; detected $($PSVersionTable.PSVersion)."
+          }
+          Get-ChildItem . -Recurse -Include *.ps1, *.psm1, *.psd1 | ForEach-Object {
+              $tokens = $null
+              $errors = $null
+              [void][System.Management.Automation.Language.Parser]::ParseFile(
+                  $_.FullName,
+                  [ref]$tokens,
+                  [ref]$errors
+              )
+              if ($errors) { throw "Parser errors in '$($_.FullName)': $($errors -join '; ')" }
+          }
+          Test-ModuleManifest ./Keldor.Build.PowerShell.psd1 | Out-Null
+          Import-Module ./Keldor.Build.PowerShell.psd1 -Force -ErrorAction Stop
+
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -24,12 +54,15 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
-          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
-          Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module PSScriptAnalyzer -RequiredVersion 1.25.0 -Scope CurrentUser -Force
+          Install-Module Pester -RequiredVersion 5.8.0 -Scope CurrentUser -Force -SkipPublisherCheck
 
       - name: Analyze
         shell: pwsh
-        run: Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results) { throw "PSScriptAnalyzer reported $($results.Count) issue(s)." }
 
       - name: Test
         shell: pwsh

@@ -1,19 +1,49 @@
 function Invoke-KeldorPowerShellBuild {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Project', SupportsShouldProcess)]
     param(
-        [Parameter(Position = 0)]
+        [Parameter(Position = 0, ParameterSetName = 'Project')]
         [ValidateNotNullOrEmpty()]
         [string]$Path = (Get-Location).Path,
 
-        [Parameter()]
+        [Parameter(Mandatory, ParameterSetName = 'Configuration')]
+        [ValidateNotNullOrEmpty()]
+        [string]$ConfigurationPath,
+
+        [Parameter(ParameterSetName = 'Configuration')]
+        [ValidateSet('Validate', 'Build', 'Release', 'Publish')]
+        [string]$Task = 'Build',
+
+        [Parameter(ParameterSetName = 'Configuration')]
+        [string]$Version,
+
+        [Parameter(ParameterSetName = 'Configuration')]
+        [string]$Repository = 'PSGallery',
+
+        [Parameter(ParameterSetName = 'Configuration')]
+        [string]$NuGetApiKey,
+
+        [Parameter(ParameterSetName = 'Project')]
         [switch]$Clean,
 
-        [Parameter()]
+        [Parameter(ParameterSetName = 'Project')]
         [switch]$Test,
 
-        [Parameter()]
+        [Parameter(ParameterSetName = 'Project')]
         [string]$OutputPath
     )
+
+    if ($PSCmdlet.ParameterSetName -eq 'Configuration') {
+        $Configuration = Resolve-KeldorPowerShellBuildConfiguration -ConfigurationPath $ConfigurationPath
+
+        return Invoke-KeldorPowerShellRepositoryBuild `
+            -Configuration $Configuration `
+            -Task $Task `
+            -Version $Version `
+            -Repository $Repository `
+            -NuGetApiKey $NuGetApiKey `
+            -WhatIf:$WhatIfPreference `
+            -Confirm:$false
+    }
 
     $Project = Resolve-KeldorPowerShellProject -Path $Path
 
@@ -26,6 +56,10 @@ function Invoke-KeldorPowerShellBuild {
     }
 
     $ModuleOutputPath = Join-Path -Path $OutputPath -ChildPath $Project.Name
+
+    if (-not $PSCmdlet.ShouldProcess($ModuleOutputPath, 'Create PowerShell module build artifact')) {
+        return
+    }
 
     if (-not (Test-Path -Path $ModuleOutputPath)) {
         New-Item -Path $ModuleOutputPath -ItemType Directory -Force | Out-Null

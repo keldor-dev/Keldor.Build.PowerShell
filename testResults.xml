@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="14" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-07-17" time="12:56:11">
+  <environment machine-name="Skylers-MacBook-Pro.local" os-version="25.5.0" nunit-version="2.5.8.0" cwd="/Users/skyler/VS_Code/Keldor/Keldor.Build.PowerShell" platform="Darwin" user="skyler" user-domain="" clr-version="9.0.6" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="1.2637" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="/Users/skyler/VS_Code/Keldor/Keldor.Build.PowerShell/Tests/Keldor.Build.PowerShell.Tests.ps1" executed="True" result="Success" success="True" time="1.2637" asserts="0" description="/Users/skyler/VS_Code/Keldor/Keldor.Build.PowerShell/Tests/Keldor.Build.PowerShell.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Keldor.Build.PowerShell module" executed="True" result="Success" success="True" time="0.1162" asserts="0" description="Keldor.Build.PowerShell module">
+            <results>
+              <test-case description="imports successfully" name="Keldor.Build.PowerShell module.imports successfully" time="0.0545" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="exports only the expected public commands" name="Keldor.Build.PowerShell module.exports only the expected public commands" time="0.0181" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="resolves this repository as a PowerShell module project" name="Keldor.Build.PowerShell module.resolves this repository as a PowerShell module project" time="0.0285" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Repository build configuration" executed="True" result="Success" success="True" time="0.2599" asserts="0" description="Repository build configuration">
+            <results>
+              <test-case description="validates and resolves relative paths from the repository root" name="Repository build configuration.validates and resolves relative paths from the repository root" time="0.0412" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects unknown keys" name="Repository build configuration.rejects unknown keys" time="0.0389" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects absolute and repository-escaping paths" name="Repository build configuration.rejects absolute and repository-escaping paths" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects invalid semantic versions" name="Repository build configuration.rejects invalid semantic versions" time="0.0273" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Configuration-driven repository builds" executed="True" result="Success" success="True" time="1.0408" asserts="0" description="Configuration-driven repository builds">
+            <results>
+              <test-case description="validates a configured manifest and returns structured output" name="Configuration-driven repository builds.validates a configured manifest and returns structured output" time="0.0341" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="stages the module, writes explicit exports, and excludes build-only content" name="Configuration-driven repository builds.stages the module, writes explicit exports, and excludes build-only content" time="0.0396" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="creates a release artifact without changing the source manifest" name="Configuration-driven repository builds.creates a release artifact without changing the source manifest" time="0.0339" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="requires a version for release tasks" name="Configuration-driven repository builds.requires a version for release tasks" time="0.012" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not mutate output under WhatIf" name="Configuration-driven repository builds.does not mutate output under WhatIf" time="0.027" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="replaces stale output deterministically" name="Configuration-driven repository builds.replaces stale output deterministically" time="0.0438" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="propagates publishing failures without returning or logging the API key" name="Configuration-driven repository builds.propagates publishing failures without returning or logging the API key" time="0.5441" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

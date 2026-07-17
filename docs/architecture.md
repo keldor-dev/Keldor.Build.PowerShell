@@ -43,6 +43,9 @@ This repository owns:
 - PowerShell project testing
 - PowerShell build output layout
 - PowerShell module publishing behavior
+- Repository configuration validation
+- Semantic version validation and release artifact preparation
+- Deterministic module staging and explicit export generation
 
 This repository should not own:
 
@@ -58,7 +61,13 @@ PowerShell 7+ is the preferred runtime.
 
 Windows PowerShell 5.1 should work where practical.
 
-PowerShell 2.0 compatibility is a goal only when it does not weaken security, correctness, or maintainability.
+The supported floor is Windows PowerShell 5.1. Supported PowerShell 7 releases are preferred for full test and
+analysis workflows.
+
+## Dependency Direction
+
+Consumer modules depend on this build module only while building. This module never imports or depends on the Keldor
+runtime module, and consumer package manifests do not list it as a runtime dependency.
 
 ## Security Position
 

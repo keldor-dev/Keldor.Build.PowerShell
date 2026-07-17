@@ -62,6 +62,27 @@ Test-KeldorPowerShellProject -Path . -Analyze
 Invoke-KeldorPowerShellBuild -Path . -Clean -Test
 ```
 
+Configuration-driven repositories can keep source and tests below the repository root:
+
+```powershell
+Test-KeldorPowerShellBuildConfiguration -ConfigurationPath ./build.config.psd1
+Invoke-KeldorPowerShellBuild -ConfigurationPath ./build.config.psd1 -Task Build
+Invoke-KeldorPowerShellBuild -ConfigurationPath ./build.config.psd1 -Task Release -Version '1.2.3'
+```
+
+The configuration mode owns reusable staging, explicit manifest exports, semantic-version release preparation, and
+publishing. Consumer repositories retain only an inert data file and a thin import/invocation script.
+
+## Installation
+
+Consumers should install an exact compatible version as a build-only dependency:
+
+```powershell
+Install-Module Keldor.Build.PowerShell -RequiredVersion 0.2.0 -Scope CurrentUser
+```
+
+Do not add this module to a consumer module's runtime `RequiredModules` unless runtime code actually uses it.
+
 ## Local Development
 
 ```powershell
@@ -81,18 +102,16 @@ This repository targets the Keldor engineering standards:
 
 - [Architecture](docs/architecture.md)
 - [Commands](docs/commands.md)
+- [Configuration Contract](docs/configuration.md)
+- [Consumer Integration](docs/consumer-integration.md)
 - [Development and Security Standards](docs/development-security-standards.md)
 - [PowerShell Provider](docs/powershell-provider.md)
 - [Standards Alignment](docs/standards/Keldor_Build_PowerShell_Standard_Alignment.md)
 
 ## Compatibility Goals
 
-Keldor PowerShell code should support:
-
-- PowerShell 7+ as the preferred runtime
-- Windows PowerShell 5.1 where practical
-- PowerShell 2.0 compatibility where practical and safe
-- Windows, macOS, and Linux where possible
+Keldor PowerShell build code supports Windows PowerShell 5.1 and supported PowerShell 7 releases on Windows, macOS,
+and Linux where the underlying build tools are available.
 
 Security and maintainability take priority over legacy compatibility when tradeoffs are unavoidable.
 

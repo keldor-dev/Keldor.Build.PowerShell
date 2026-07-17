@@ -1,9 +1,9 @@
 $script:ModuleRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 foreach ($Path in @(
-    (Join-Path $script:ModuleRoot 'Private'),
-    (Join-Path $script:ModuleRoot 'Public')
-)) {
+        (Join-Path $script:ModuleRoot 'Private'),
+        (Join-Path $script:ModuleRoot 'Public')
+    )) {
     if (Test-Path -Path $Path) {
         Get-ChildItem -Path $Path -Filter '*.ps1' -Recurse | Where-Object { -not $_.PSIsContainer } | ForEach-Object {
             . $_.FullName
