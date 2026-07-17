@@ -62,8 +62,11 @@ Clear-KeldorPowerShellBuild -Path .
 Publishes a PowerShell module project using `Publish-Module`.
 
 ```powershell
-Publish-KeldorPowerShellProject -Path . -Repository PSGallery -NuGetApiKey $env:PSGALLERY_API_KEY
+Publish-KeldorPowerShellProject -Path ./out/Keldor -Repository PSGallery -WhatIf
 ```
+
+For a real Keldor publication, retrieve the key at runtime with 1Password and follow the
+[Keldor release runbook](publishing/keldor-release.md).
 
 ## `Register-KeldorPowerShellBuildProvider`
 

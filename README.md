@@ -106,6 +106,9 @@ This repository targets the Keldor engineering standards:
 - [Consumer Integration](docs/consumer-integration.md)
 - [Development and Security Standards](docs/development-security-standards.md)
 - [PowerShell Provider](docs/powershell-provider.md)
+- [Keldor Release Runbook](docs/publishing/keldor-release.md)
+- [Publish Keldor to SHFamily ProGet](docs/publishing/proget.md)
+- [Publish Keldor to the PowerShell Gallery](docs/publishing/powershellgallery.md)
 - [Standards Alignment](docs/standards/Keldor_Build_PowerShell_Standard_Alignment.md)
 
 ## Compatibility Goals

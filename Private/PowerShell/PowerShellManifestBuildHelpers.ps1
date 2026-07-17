@@ -57,10 +57,6 @@ function Update-KeldorPowerShellManifestVersion {
         $UpdatedContent = $UpdatedContent -replace "(?m)^(\s*)Prerelease\s*=\s*'[^']*'", "`$1# Prerelease = ''"
     }
 
-    if ($UpdatedContent -eq $Content) {
-        throw "Manifest '$ManifestPath' could not be updated to version '$Version'."
-    }
-
     if ($PSCmdlet.ShouldProcess($ManifestPath, "Update module manifest version to '$Version'")) {
         Set-Content -LiteralPath $ManifestPath -Value $UpdatedContent -NoNewline -Encoding utf8
     }

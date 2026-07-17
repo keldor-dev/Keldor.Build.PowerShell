@@ -182,6 +182,16 @@ Describe 'Configuration-driven repository builds' {
         (Get-Content -LiteralPath $SourceManifest -Raw) | Should -BeExactly $SourceBefore
     }
 
+    It 'creates a release artifact when the version already matches the source manifest' {
+        $Result = Invoke-KeldorPowerShellBuild `
+            -ConfigurationPath $ConfigurationPath `
+            -Task Release `
+            -Version '1.2.3'
+
+        $Result.ModuleVersion | Should -Be '1.2.3'
+        Test-Path -LiteralPath $Result.ManifestPath | Should -BeTrue
+    }
+
     It 'requires a version for release tasks' {
         { Invoke-KeldorPowerShellBuild -ConfigurationPath $ConfigurationPath -Task Release } |
             Should -Throw '*requires -Version*'
@@ -205,7 +215,9 @@ Describe 'Configuration-driven repository builds' {
 
     It 'propagates publishing failures without returning or logging the API key' {
         Mock -CommandName Find-Module -ModuleName Keldor.Build.PowerShell -MockWith { $null }
-        Mock -CommandName Publish-Module -ModuleName Keldor.Build.PowerShell -MockWith { throw 'feed unavailable' }
+        Mock -CommandName Publish-KeldorPowerShellProject -ModuleName Keldor.Build.PowerShell -MockWith {
+            throw 'feed unavailable'
+        }
 
         $CaughtError = $null
 

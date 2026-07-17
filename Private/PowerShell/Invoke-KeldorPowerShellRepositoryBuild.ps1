@@ -122,7 +122,7 @@ function Invoke-KeldorPowerShellRepositoryBuild {
             $PublishParameters.NuGetApiKey = $NuGetApiKey
         }
 
-        Publish-Module @PublishParameters -ErrorAction Stop
+        Publish-KeldorPowerShellProject @PublishParameters -ErrorAction Stop
         $Published = $true
     }
 

@@ -1,339 +1,203 @@
-# Publishing PowerShell Modules to the PowerShell Gallery
+# Publish Keldor to the PowerShell Gallery
 
-This document outlines the process for publishing validated PowerShell modules to the PowerShell Gallery.
+The PowerShell Gallery is the public production destination for Keldor. Publish only the staged module directory that
+was already published to and validated from SHFamily ProGet. Follow the
+[Keldor release runbook](keldor-release.md) before using this guide.
 
-The PowerShell Gallery is the public production destination for official Keldor module releases. Packages should be built, tested, and validated through the internal ProGet test feed before they are published publicly.
+> [!WARNING]
+> A published version is public and cannot be replaced. If it is defective, fix the source, increment the semantic
+> version, repeat the complete ProGet validation path, and publish the new version. Never reuse a released version.
 
-> [!IMPORTANT]
-> Do not use the PowerShell Gallery as a testing feed. Published versions are public and cannot be replaced with a corrected package using the same version number.
+## Release prerequisites
 
----
+- The exact candidate version was published to SHRepo and passed clean-session, platform, and integration tests.
+- The unchanged `out/Keldor` artifact and its recorded file hashes are still available in the release session.
+- The semantic version and `PrivateData.PSData.ReleaseNotes` are final.
+- Manifest metadata, explicit exports, package contents, Pester, and PSScriptAnalyzer checks passed.
+- The version is absent from PSGallery.
+- The Keldor working tree is clean and on the approved release commit and branch.
+- The `v<version>` tag and GitHub Release requirements in Keldor's process are satisfied.
+- The publisher account may publish `Keldor`, and its API key has the narrowest available package scope and
+  least-privilege permissions.
+- PowerShellGet, PSResourceGet, `Keldor.Build.PowerShell` 0.2.0, and an authenticated 1Password CLI are available.
 
-## Purpose
+The build module does not validate Git state, create tags or GitHub Releases, or confirm that SHRepo tests passed.
+These remain explicit operator/release-automation gates.
 
-The PowerShell Gallery publishing process should provide a controlled path from a validated build artifact to a public release.
+## PowerShell Gallery key security
 
-The process should ensure that:
+Store the key only in 1Password. Scope it to Keldor when Gallery functionality permits, use the shortest practical
+expiration, and rotate it according to the team's credential policy.
 
-- The module version is correct and has not already been published.
-- Required tests and static analysis checks have passed.
-- The package installed and functioned correctly from the internal ProGet test feed.
-- Release notes and documentation are complete.
-- The PowerShell Gallery API key is retrieved securely.
-- The published package is verified after release.
-
----
-
-## Recommended Release Flow
-
-1. Prepare the release branch or release commit.
-2. Update the module version.
-3. Update release notes and documentation.
-4. Build the module artifact.
-5. Run PSScriptAnalyzer.
-6. Run Pester tests.
-7. Validate the module manifest and exported commands.
-8. Publish the package to the internal ProGet test feed.
-9. Install the package from ProGet in a clean test environment.
-10. Perform smoke and integration testing.
-11. Confirm the PowerShell Gallery version does not already exist.
-12. Create the Git tag and GitHub release.
-13. Publish the validated artifact to the PowerShell Gallery.
-14. Verify the public package metadata and installation.
-15. Announce or document the release.
-
----
-
-## Prerequisites
-
-Before publishing, confirm the following:
-
-- A PowerShell Gallery account has been created.
-- The publishing account owns or has permission to publish the module.
-- A valid PowerShell Gallery API key is available.
-- The API key is stored securely and is not committed to source control.
-- `Microsoft.PowerShell.PSResourceGet` is installed.
-- The module manifest contains valid Gallery metadata.
-- The target version has not already been published.
-
----
-
-## Required Module Metadata
-
-The module manifest should include, at minimum:
-
-- `RootModule`
-- `ModuleVersion`
-- `GUID`
-- `Author`
-- `CompanyName`
-- `Copyright`
-- `Description`
-- `PowerShellVersion`
-- `FunctionsToExport`
-- `CmdletsToExport`
-- `AliasesToExport`
-- `PrivateData.PSData.Tags`
-- `PrivateData.PSData.LicenseUri`
-- `PrivateData.PSData.ProjectUri`
-- `PrivateData.PSData.ReleaseNotes`
-
-The manifest should also be tested using:
+This session could not confirm an existing Gallery item or field label. The recommended item is `PowerShell Gallery`
+in the `DevOps` vault. Inspect metadata without displaying values:
 
 ```powershell
-Test-ModuleManifest -Path '.\Keldor.psd1'
+op item get 'PowerShell Gallery' --vault 'DevOps' --format json |
+    ConvertFrom-Json |
+    Select-Object -ExpandProperty fields |
+    Select-Object label, type, purpose
 ```
 
----
+If the item does not exist, create it through the approved 1Password workflow, add a concealed field for the
+narrowly scoped key, and grant only the release operators access. Replace `<api-key-field>` with the confirmed label:
 
-## Validate the Target Version
+```text
+op://DevOps/PowerShell Gallery/<api-key-field>
+```
 
-Before publishing, confirm that the version is not already present in the PowerShell Gallery:
+Do not guess the field label and never paste the key into documentation, configuration, shell history, or a persistent
+environment variable.
+
+## Preflight
+
+Run from the same Keldor release session that retained `$version`, `$artifact`, and `$artifactHashes` after SHRepo
+validation:
 
 ```powershell
-Find-PSResource `
-    -Name 'Keldor' `
+$ErrorActionPreference = 'Stop'
+
+Get-Command op -ErrorAction Stop | Out-Null
+op whoami | Out-Null
+
+if (git status --porcelain) {
+    throw 'The Keldor working tree must be clean before public release.'
+}
+
+$currentCommit = git rev-parse HEAD
+$tagCommit = git rev-list -n 1 "v$version"
+if ($currentCommit -ne $tagCommit) {
+    throw "Tag v$version does not identify the current release commit."
+}
+
+Get-PSResourceRepository -Name PSGallery -ErrorAction Stop | Out-Null
+Get-PSRepository -Name PSGallery -ErrorAction Stop | Out-Null
+
+$existing = Find-PSResource `
+    -Name Keldor `
     -Repository PSGallery `
-    -Version '1.0.0'
+    -Version $version `
+    -ErrorAction SilentlyContinue
+if ($existing) {
+    throw "Keldor $version already exists in the PowerShell Gallery."
+}
+
+$manifest = Test-ModuleManifest -Path $artifact.ManifestPath -ErrorAction Stop
+if ($manifest.Version.ToString() -ne $artifact.ModuleVersion) {
+    throw 'The staged manifest and build result versions differ.'
+}
+
+$currentHashes = Get-ChildItem $artifact.OutputPath -File -Recurse |
+    Get-FileHash -Algorithm SHA256
+$hashDifference = Compare-Object `
+    -ReferenceObject $artifactHashes `
+    -DifferenceObject $currentHashes `
+    -Property Path, Hash
+if ($hashDifference) {
+    throw 'The staged artifact changed after SHRepo validation.'
+}
+
+$manifest | Select-Object Name, Version, Author, Description, ProjectUri, LicenseUri, ReleaseNotes, RequiredModules
+Get-ChildItem $artifact.OutputPath -File -Recurse | Select-Object FullName, Length
 ```
 
-A production release must always use a unique semantic version.
+For prereleases, include `-Prerelease` when querying the Gallery. Review aliases, `CompatiblePSEditions`, tags,
+`HelpInfoUri`, icon/project/license links, and external dependencies before proceeding.
 
----
-
-## Build and Test
-
-The exact build commands will eventually be provided by Keldor.Build.PowerShell. Until then, the release process should include:
-
-```powershell
-Invoke-ScriptAnalyzer `
-    -Path '.\src\Keldor' `
-    -Recurse
-
-Invoke-Pester `
-    -Path '.\tests' `
-    -CI
-
-Test-ModuleManifest `
-    -Path '.\output\Keldor\Keldor.psd1'
-```
-
-The build should produce a clean, versioned module directory containing only files required by the published package.
-
----
-
-## Validate Through ProGet
-
-Before publishing publicly, publish the candidate package to the internal ProGet test feed.
-
-> [!NOTE]
-> The SHFamily ProGet instance is used only for development and testing. It is not the final production destination for official releases.
-
-```powershell
-Publish-PSResource `
-    -Path '.\output\Keldor' `
-    -Repository SHRepo `
-    -ApiKey '<PROGET_API_KEY>'
-```
-
-Install the exact package version from ProGet into a clean test environment:
-
-```powershell
-Install-PSResource `
-    -Name 'Keldor' `
-    -Version '1.0.0' `
-    -Repository SHRepo `
-    -Scope CurrentUser
-```
-
-Validation should include:
-
-- Importing the installed module.
-- Confirming exported commands.
-- Running smoke tests against the installed package.
-- Confirming help files and online help links.
-- Confirming dependencies install correctly.
-- Testing supported PowerShell editions and operating systems.
-
----
-
-## Register the PowerShell Gallery
-
-The PowerShell Gallery is normally registered by default. Verify its configuration with:
-
-```powershell
-Get-PSResourceRepository -Name PSGallery
-```
-
-If registration is missing, restore the default repository:
+If PSGallery is missing from PSResourceGet, restore it with:
 
 ```powershell
 Register-PSResourceRepository -PSGallery
 ```
 
----
+PowerShellGet normally registers PSGallery automatically. Repair that registration using the organization's approved
+PowerShellGet setup rather than inventing a new endpoint.
 
-## Publish with PSResourceGet
+## Dry run and publish
 
-PSResourceGet is the recommended publishing method.
+The supported publishing command uses PowerShellGet's `Publish-Module` internally and publishes the existing artifact:
 
 ```powershell
-Publish-PSResource `
-    -Path '.\output\Keldor' `
+Publish-KeldorPowerShellProject `
+    -Path $artifact.OutputPath `
     -Repository PSGallery `
-    -ApiKey '<POWERSHELL_GALLERY_API_KEY>'
+    -WhatIf
 ```
 
-> [!WARNING]
-> Never store the API key directly in a script, repository, build log, or shell history.
-
----
-
-## Legacy PowerShellGet Publishing
-
-Legacy publishing may still be required for compatibility with older automation.
+The dry run needs no key. For the irreversible public operation, retrieve the key only for the command lifetime. Do
+not enable command tracing or a transcript around this block:
 
 ```powershell
-Publish-Module `
-    -Path '.\output\Keldor' `
+$apiKey = op read 'op://DevOps/PowerShell Gallery/<api-key-field>'
+if ([string]::IsNullOrWhiteSpace($apiKey)) {
+    throw '1Password returned an empty PowerShell Gallery API key.'
+}
+
+try {
+    Publish-KeldorPowerShellProject `
+        -Path $artifact.OutputPath `
+        -Repository PSGallery `
+        -NuGetApiKey $apiKey `
+        -ErrorAction Stop
+} finally {
+    Remove-Variable apiKey -ErrorAction SilentlyContinue
+}
+```
+
+The command normally runs without a confirmation prompt; add `-Confirm` to require one. It returns no structured
+publication object, so verification is mandatory. Removing the variable is best-effort process hygiene, not guaranteed
+memory erasure.
+
+Do not use `./build.ps1 -Task Publish` for this promotion. That path rebuilds the module before publishing and would no
+longer prove that the SHRepo-tested artifact is the public artifact.
+
+## Verify the public release
+
+Allow for Gallery indexing, then use a fresh PowerShell session and an isolated download directory:
+
+```powershell
+$public = Find-PSResource `
+    -Name Keldor `
     -Repository PSGallery `
-    -NuGetApiKey '<POWERSHELL_GALLERY_API_KEY>'
-```
+    -Version $version `
+    -ErrorAction Stop
 
-PSResourceGet should remain the default for new automation.
+$testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "keldor-psgallery-$version"
+New-Item -Path $testRoot -ItemType Directory -Force | Out-Null
 
----
-
-## Secure API Key Retrieval
-
-The publishing API key should be retrieved at runtime from a secure secret store such as:
-
-- 1Password CLI
-- Microsoft.PowerShell.SecretManagement
-- GitHub Actions Secrets
-- Azure Key Vault
-
-Example placeholder workflow:
-
-```powershell
-$ApiKey = Get-KeldorSecret `
-    -Vault 'DevOps' `
-    -Item 'PowerShell Gallery'
-
-Publish-PSResource `
-    -Path '.\output\Keldor' `
+Save-PSResource `
+    -Name Keldor `
+    -Version $version `
     -Repository PSGallery `
-    -ApiKey $ApiKey
+    -Path $testRoot `
+    -TrustRepository
+
+$installedManifest = Get-ChildItem $testRoot -Filter Keldor.psd1 -Recurse | Select-Object -First 1
+$published = Test-ModuleManifest -Path $installedManifest.FullName -ErrorAction Stop
+Import-Module $installedManifest.FullName -Force -ErrorAction Stop
+
+$public | Select-Object Name, Version, Repository, PublishedDate
+$published | Select-Object Name, Version, ProjectUri, LicenseUri, HelpInfoUri, RequiredModules
+Get-Command -Module Keldor | Sort-Object CommandType, Name
+Get-Alias | Where-Object { $_.ResolvedCommand.ModuleName -eq 'Keldor' }
+Get-KeldorPlatform
+
+Remove-Module Keldor -ErrorAction SilentlyContinue
+Remove-Item $testRoot -Recurse -Force
 ```
 
-The final implementation may retrieve the API key directly through the 1Password CLI or a Keldor.Build.PowerShell wrapper.
+Confirm the Gallery page renders release notes and project links, dependencies resolve, online help works, and the
+supported platform smoke tests pass.
 
----
+## Failure and recovery
 
-## Verify the Published Package
+- If publication fails before the Gallery accepts the package, diagnose authorization, ownership, TLS, metadata, and
+  endpoint errors without printing the key. Repeat only after confirming the version is still absent.
+- If the version is accepted but defective, do not republish it. Fix source, increment the version, build a new
+  candidate, validate it through SHRepo, and publish the new Gallery version.
+- Unlist only when the release is harmful or misleading and policy supports it. Unlisting does not permit version reuse.
 
-After publishing, confirm that the expected version is available:
+## API-key rotation
 
-```powershell
-Find-PSResource `
-    -Name 'Keldor' `
-    -Repository PSGallery `
-    -Version '1.0.0'
-```
-
-Install the public package into a clean environment:
-
-```powershell
-Install-PSResource `
-    -Name 'Keldor' `
-    -Version '1.0.0' `
-    -Repository PSGallery `
-    -Scope CurrentUser
-```
-
-Then verify the installed module:
-
-```powershell
-Import-Module Keldor -Force
-
-Get-Command -Module Keldor
-
-Get-Module Keldor -ListAvailable
-```
-
----
-
-## Failure and Recovery
-
-A published PowerShell Gallery package cannot be overwritten using the same version number.
-
-If a release is defective:
-
-1. Determine whether the package should be unlisted.
-2. Correct the issue in source control.
-3. Increment the module version.
-4. Repeat the full validation process.
-5. Publish the corrected version as a new release.
-
-Do not attempt to reuse the original version number.
-
----
-
-## Future Keldor.Build.PowerShell Integration
-
-The long-term goal is to automate this process through Keldor.Build.PowerShell.
-
-A future publishing command may resemble:
-
-```powershell
-Publish-KeldorPowerShellModule `
-    -Path '.\src\Keldor' `
-    -TestRepository SHRepo `
-    -PublishRepository PSGallery
-```
-
-The automated workflow should eventually:
-
-- Validate the working tree and release branch.
-- Determine and validate the module version.
-- Build the module.
-- Run PSScriptAnalyzer and Pester.
-- Validate the manifest and package contents.
-- Publish to ProGet for test validation.
-- Install and test the ProGet package.
-- Create a Git tag and GitHub release.
-- Retrieve the PowerShell Gallery API key securely.
-- Publish the validated artifact to the PowerShell Gallery.
-- Verify the public release.
-- Produce a release summary.
-
----
-
-## Release Checklist
-
-- [ ] Version updated
-- [ ] Release notes updated
-- [ ] Documentation updated
-- [ ] Manifest validated
-- [ ] PSScriptAnalyzer passed
-- [ ] Pester tests passed
-- [ ] Build artifact created
-- [ ] Published to ProGet
-- [ ] Installed and tested from ProGet
-- [ ] Target version confirmed absent from PSGallery
-- [ ] Git tag created
-- [ ] GitHub release created
-- [ ] PowerShell Gallery API key retrieved securely
-- [ ] Published to PSGallery
-- [ ] Public package verified
-- [ ] Release announced or documented
-
----
-
-## Related Documentation
-
-- [Publishing to ProGet](proget.md)
-- Build process documentation
-- Versioning standard
-- Release notes standard
-- GitHub release workflow
+Rotate the value in the same 1Password field. The `op://DevOps/PowerShell Gallery/<api-key-field>` reference remains
+unchanged, so no source or documentation update is required. Revoke the old Gallery key after validating the new one.
